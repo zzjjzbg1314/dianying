@@ -2,7 +2,8 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:beans="http://www.springframework.org/schema/beans"
 	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
-	xmlns:task="http://www.springframework.org/schema/task" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:aop="http://www.springframework.org/schema/aop"
 	xmlns:cache="http://www.springframework.org/schema/cache"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
@@ -11,20 +12,17 @@
 		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
 		http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache-3.2.xsd">
 
-	<!-- enable autowire -->
 	<context:annotation-config />
-	<context:component-scan base-package="com.weimob.finance.service.biz" />
-	<context:component-scan base-package="com.weimob.finance.service.soa" />
-	<context:component-scan base-package="com.weimob.finance.repository" />
-	<context:component-scan base-package="com.weimob.finance.*.service.impl" />
-	<context:component-scan base-package="com.weimob.finance.*.dubbo.impl" />
-	<context:component-scan base-package="com.weimob.finance.*.repository" />
-	<context:component-scan base-package="com.weimob.finance.*.ext.service.impl" />
-	<context:component-scan base-package="com.weimob.finance.utils">
+	<context:component-scan base-package="com.gaofen.dianying"
+		use-default-filters="false">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Repository" />
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Service" />
 		<context:include-filter type="annotation"
 			expression="org.springframework.stereotype.Component" />
 	</context:component-scan>
-
+	
 	<context:property-placeholder location="/WEB-INF/properties/*.properties" />
 
 	<aop:aspectj-autoproxy />
@@ -36,11 +34,6 @@
 		<beans:property name="cacheSeconds" value="120" />
 		<beans:property name="useCodeAsDefaultMessage" value="true" />
 	</beans:bean>
-
-	<import resource="spring-datasource.xml" />
-
-	<task:annotation-driven />
-
-	<import resource="classpath*:com/weimob/finance/**/spring/*.xml" />
-
+<!-- 	<import resource="spring-datasource.xml" />
+ -->	<task:annotation-driven />
 </beans>
