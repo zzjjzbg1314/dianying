@@ -4,10 +4,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
-public class IndexController {
+public class FileDetailController {
 		
-	/*@RequestMapping("/index")
+	@RequestMapping("/detail")
     public String  home(Model model) {
-        return "index";
-    }*/
+        return "/film/file_detail";
+    }
 }

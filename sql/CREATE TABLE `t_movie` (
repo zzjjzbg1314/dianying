@@ -1,0 +1,37 @@
+CREATE TABLE `t_movie` (
+  `movie_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '电影主体表主键Id',
+  `movie_name` varchar(64) NOT NULL DEFAULT '' COMMENT '电影名称(可包括多个别名)',
+  `movie_director` varchar(32) NOT NULL DEFAULT '' COMMENT '导演',
+  `movie_directedBy` varchar(32) NOT NULL DEFAULT '' COMMENT '编剧',
+  `movie_starring` varchar(32) NOT NULL DEFAULT '' COMMENT '主演',
+  `movie_country` varchar(16) NOT NULL DEFAULT '' COMMENT '国家',
+  `movie_language` varchar(16) NOT NULL DEFAULT '' COMMENT '语言',
+  `movie_type` tinyint(1) NOT NULL DEFAULT '0' COMMENT '帐户类型:0.供货商，1.分销商，3、微客 4、囤货分销商 5、V店供货商 7、V店服务商',
+  `movie_rating` int(11) NOT NULL DEFAULT '0' COMMENT '豆瓣评分',
+  `movie_quote` varchar(64) NOT NULL DEFAULT '' COMMENT '一句话简评',
+  `movie_cover_pic` varchar(64) NOT NULL DEFAULT '' COMMENT '封面图片',
+  `release_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '电影上印时间',
+  `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `flag` tinyint(1) NOT NULL DEFAULT '0' COMMENT '数据状态',
+  PRIMARY KEY (`movie_id`),
+  KEY `movie_rating` (`movie_rating`) USING BTREE,
+  KEY `movie_type` (`movie_type`) USING BTREE,
+  KEY `release_time` (`release_time`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='电影主体表';
+
+
+CREATE TABLE `t_movie_detail` (
+  `movie_detail_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '电影详情表主键Id',
+  `movie_id` int(11) not NULL COMMENT '电影主体表主键Id',
+  `movie_synopsis` text  COMMENT '剧情简介',
+  `movie_stills` text COMMENT '剧照',
+  `movie_like_num` int(11) NOT NULL DEFAULT '0' COMMENT '喜欢人次',
+  `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `flag` tinyint(1) NOT NULL DEFAULT '0' COMMENT '数据状态',
+  PRIMARY KEY (`movie_detail_id`),
+  UNIQUE KEY `movie_id` (`movie_id`) USING BTREE,
+  KEY `movie_like_num` (`movie_like_num`) USING BTREE,
+  KEY `create_time` (`create_time`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='电影详情表';
