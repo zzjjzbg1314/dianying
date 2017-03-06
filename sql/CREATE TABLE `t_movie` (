@@ -35,3 +35,30 @@ CREATE TABLE `t_movie_detail` (
   KEY `movie_like_num` (`movie_like_num`) USING BTREE,
   KEY `create_time` (`create_time`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='电影详情表';
+
+
+
+CREATE TABLE `t_movie_baiduyun` (
+  `movie_baiduyun_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '电影百度云信息主键Id',
+  `movie_id` int(11) not NULL COMMENT '电影主体表主键Id',
+  `movie_baiduyun_link_info` varchar(64) NOT NULL DEFAULT '' COMMENT '百度云连接',
+  `movie_baiduyun_link_back_info` varchar(64) NOT NULL DEFAULT '' COMMENT '百度云连接备用地址',
+  `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `flag` tinyint(1) NOT NULL DEFAULT '0' COMMENT '数据状态',
+  PRIMARY KEY (`movie_baiduyun_id`),
+  UNIQUE KEY `movie_id` (`movie_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='电影百度云信息表';
+
+
+
+CREATE TABLE `t_movie_excellent_comment` (
+  `movie_excellent_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '精彩点评',
+  `movie_id` int(11) not NULL COMMENT '电影主体表主键Id',
+  `movie_excellent_comment` text  COMMENT '精彩点评',
+  `movie_excellent_comment_author` varchar(64) NOT NULL DEFAULT '' COMMENT '精彩点评作者',
+  `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `flag` tinyint(1) NOT NULL DEFAULT '0' COMMENT '数据状态',
+  PRIMARY KEY (`movie_excellent_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='精彩点评表';
