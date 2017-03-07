@@ -23,4 +23,7 @@
         <property name="suffix" value=".jsp"/>
     </bean>
 	
+	<mvc:resources location="/resources/css/" mapping="/resources/css/**" />  
+	<mvc:resources location="/resources/js/" mapping="/resources/js/**" />
+	
 </beans>
