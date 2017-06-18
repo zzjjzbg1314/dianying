@@ -1,461 +1,407 @@
 package com.gaofen.dianying.utils;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.URI;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.net.ssl.SSLException;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpRequestRetryHandler;
+import org.apache.http.*;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.client.utils.HttpClientUtils;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.config.SocketConfig;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.conn.ConnectionKeepAliveStrategy;
-import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
-import org.apache.http.entity.ContentType;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSON;
+import javax.net.ssl.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
+/**
+ * Created by zongjie on 2017/5/29.
+ */
 public class HttpClientUtil {
 
-	private static final Logger LOG = LoggerFactory.getLogger(HttpClientUtil.class);
+    private HttpClientUtil(){}
 
-	private static final String JSON_DATA_KEY = "json_data";
-	private static final String XML_DATA_KEY = "xml_data";
 
-	private static final Integer SOCKET_TIMEOUT = 30000;
-	private static final Integer CONN_TIMEOUT = 30000;
-	private static final Integer CONN_REQUEST_TIMEOUT = 30000;
+    private static final String APPLICATION_JSON = "application/json";
 
-	public static final Integer DEFAULT_MAX_CONN_PER_ROUTE = 50;
-	public static final Integer DEFAULT_MAX_CONN_TOTAL = 500;
+    private static Logger logger = LoggerFactory.getLogger(HttpClientUtil.class);
 
-	public static final Integer DEFAULT_KEEP_ALIVE = 5000;
-	public static final Integer DEFAULT_RETRY_COUNT = 3;
+    private static final String CONTENT_TYPE_TEXT_JSON = "text/json";
 
-	public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 
-	private static RequestConfig requestConfig;
-	private static SocketConfig socketConfig;
-	private static PoolingHttpClientConnectionManager connectionManager;
 
-	private static CloseableHttpClient httpClient;
+    /**
+     * 发送HTTP_GET请求
+     * @param reqURL    请求地址(含参数)
+     * @param decodeCharset 解码字符集,解析响应数据时用之,其为null时默认采用UTF-8解码
+     * @return 远程主机响应正文
+     */
+    public static String sendGetRequest(String reqURL, String decodeCharset){
+        long responseLength = 0;       //响应长度
+        String responseContent = null; //响应内容
+        HttpClient httpClient = new DefaultHttpClient(); //创建默认的httpClient实例
+        HttpGet httpGet = new HttpGet(reqURL);           //创建org.apache.http.client.methods.HttpGet
+        try{
+            HttpResponse response = httpClient.execute(httpGet); //执行GET请求
+            HttpEntity entity = response.getEntity();            //获取响应实体
+            if(null != entity){
+                responseLength = entity.getContentLength();
+                responseContent = EntityUtils.toString(entity, decodeCharset==null ? "UTF-8" : decodeCharset);
+                EntityUtils.consume(entity); //Consume response content
+            }
+            System.out.println("请求地址: " + httpGet.getURI());
+            System.out.println("响应状态: " + response.getStatusLine());
+            System.out.println("响应长度: " + responseLength);
+            System.out.println("响应内容: " + responseContent);
+        }catch(ClientProtocolException e){
+            logger.debug("该异常通常是协议错误导致,比如构造HttpGet对象时传入的协议不对(将'http'写成'htp')或者服务器端返回的内容不符合HTTP协议要求等,堆栈信息如下", e);
+        }catch(ParseException e){
+            logger.debug(e.getMessage(), e);
+        }catch(IOException e){
+            logger.debug("该异常通常是网络原因引起的,如HTTP服务器未启动等,堆栈信息如下", e);
+        }finally{
+            httpClient.getConnectionManager().shutdown(); //关闭连接,释放资源
+        }
+        return responseContent;
+    }
 
-	static {
-		requestConfig = RequestConfig.custom().setConnectTimeout(CONN_TIMEOUT).setSocketTimeout(SOCKET_TIMEOUT).setConnectionRequestTimeout(CONN_REQUEST_TIMEOUT).build();
-		socketConfig = SocketConfig.custom().setTcpNoDelay(true).setSoTimeout(SOCKET_TIMEOUT).setSoKeepAlive(true).build();
 
-		ConnectionKeepAliveStrategy keepAliveStrat = new DefaultConnectionKeepAliveStrategy() {
-			public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-				long keepAlive = super.getKeepAliveDuration(response, context);
-				if (keepAlive == -1L) {
+    /**
+     * 发送HTTP_POST请求
+     * @param isEncoder 用于指明请求数据是否需要UTF-8编码,true为需要
+     */
+    public static String sendPostRequest(String reqURL, String sendData, boolean isEncoder){
+        return sendPostRequest(reqURL, sendData, isEncoder, null, null);
+    }
 
-					keepAlive = DEFAULT_KEEP_ALIVE;
-				}
-				return keepAlive;
-			}
 
-		};
+    /**
+     * 发送HTTP_POST请求
+     * @param reqURL        请求地址
+     * @param sendData      请求参数,若有多个参数则应拼接成param11=value11&22=value22&33=value33的形式后,传入该参数中
+     * @param isEncoder     请求数据是否需要encodeCharset编码,true为需要
+     * @param encodeCharset 编码字符集,编码请求数据时用之,其为null时默认采用UTF-8解码
+     * @param decodeCharset 解码字符集,解析响应数据时用之,其为null时默认采用UTF-8解码
+     * @return 远程主机响应正文
+     */
+    public static String sendPostRequest(String reqURL, String sendData, boolean isEncoder, String encodeCharset, String decodeCharset){
+        String responseContent = null;
+        HttpClient httpClient = new DefaultHttpClient();
 
-		HttpRequestRetryHandler retryHandler = new HttpRequestRetryHandler() {
-			public boolean retryRequest(IOException exception, int executionCount, HttpContext context) {
-				if (executionCount >= DEFAULT_RETRY_COUNT) {
-					return false;
-				}
-				if ((exception instanceof InterruptedIOException)) {
-					return false;
-				}
-				if ((exception instanceof UnknownHostException)) {
-					return false;
-				}
-				if ((exception instanceof ConnectTimeoutException)) {
-					return false;
-				}
-				if ((exception instanceof SSLException)) {
-					return false;
-				}
-				HttpClientContext clientContext = HttpClientContext.adapt(context);
+        HttpPost httpPost = new HttpPost(reqURL);
+        //httpPost.setHeader(HTTP.CONTENT_TYPE, "application/x-www-form-urlencoded; charset=UTF-8");
+        httpPost.setHeader(HTTP.CONTENT_TYPE, "application/x-www-form-urlencoded");
+        try{
+            if(isEncoder){
+                List<NameValuePair> formParams = new ArrayList<NameValuePair>();
+                for(String str : sendData.split("&")){
+                    formParams.add(new BasicNameValuePair(str.substring(0,str.indexOf("=")), str.substring(str.indexOf("=")+1)));
+                }
+                httpPost.setEntity(new StringEntity(URLEncodedUtils.format(formParams, encodeCharset==null ? "UTF-8" : encodeCharset)));
+            }else{
+                httpPost.setEntity(new StringEntity(sendData));
+            }
 
-				HttpRequest request = clientContext.getRequest();
-				boolean idempotent = !(request instanceof HttpEntityEnclosingRequest);
-				if (idempotent) {
-					return true;
-				}
-				return false;
-			}
-		};
+            HttpResponse response = httpClient.execute(httpPost);
+            HttpEntity entity = response.getEntity();
+            if (null != entity) {
+                responseContent = EntityUtils.toString(entity, decodeCharset==null ? "UTF-8" : decodeCharset);
+                EntityUtils.consume(entity);
+            }
+        }catch(Exception e){
+            logger.debug("与[" + reqURL + "]通信过程中发生异常,堆栈信息如下", e);
+        }finally{
+            httpClient.getConnectionManager().shutdown();
+        }
+        return responseContent;
+    }
 
-		connectionManager = new PoolingHttpClientConnectionManager();
-		connectionManager.setDefaultMaxPerRoute(DEFAULT_MAX_CONN_PER_ROUTE);
-		connectionManager.setMaxTotal(DEFAULT_MAX_CONN_TOTAL);
-		connectionManager.setDefaultSocketConfig(socketConfig);
 
-		httpClient = HttpClients.custom().setConnectionManager(connectionManager).setDefaultRequestConfig(requestConfig).setRetryHandler(retryHandler)
-				.setKeepAliveStrategy(keepAliveStrat).build();
+    /**
+     * 发送HTTP_POST请求
+     * @param reqURL        请求地址
+     * @param params        请求参数
+     * @param encodeCharset 编码字符集,编码请求数据时用之,其为null时默认采用UTF-8解码
+     * @param decodeCharset 解码字符集,解析响应数据时用之,其为null时默认采用UTF-8解码
+     * @return 远程主机响应正文
+     */
+    public static String sendPostRequest(String reqURL, Map<String, String> params, String encodeCharset, String decodeCharset){
+        String responseContent = null;
+        HttpClient httpClient = new DefaultHttpClient();
 
-	}
+        HttpPost httpPost = new HttpPost(reqURL);
+        List<NameValuePair> formParams = new ArrayList<NameValuePair>(); //创建参数队列
+        for(Map.Entry<String,String> entry : params.entrySet()){
+            formParams.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+        }
+        try{
+            httpPost.setEntity(new UrlEncodedFormEntity(formParams, encodeCharset==null ? "UTF-8" : encodeCharset));
 
-	/**
-	 * GET请求
-	 * 
-	 * @param url
-	 *            请求路径
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String get(String url) throws Exception {
-		return doRequest(HttpMethod.GET, url, null, null);
-	}
+            HttpResponse response = httpClient.execute(httpPost);
+            HttpEntity entity = response.getEntity();
+            if (null != entity) {
+                responseContent = EntityUtils.toString(entity, decodeCharset==null ? "UTF-8" : decodeCharset);
+                EntityUtils.consume(entity);
+            }
+        }catch(Exception e){
+            logger.debug("与[" + reqURL + "]通信过程中发生异常,堆栈信息如下", e);
+        }finally{
+            httpClient.getConnectionManager().shutdown();
+        }
+        return responseContent;
+    }
 
-	/**
-	 * GET请求
-	 * 
-	 * @param url
-	 *            请求路径
-	 * @param paramMap
-	 *            请求参数
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String get(String url, Map<String, String> paramMap) throws Exception {
-		return doRequest(HttpMethod.GET, url, paramMap, null);
-	}
 
-	/**
-	 * GET请求
-	 * 
-	 * @param url
-	 *            请求路径
-	 * @param paramMap
-	 *            请求参数
-	 * @param headerMap
-	 *            自定义头信息
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String get(String url, Map<String, String> paramMap, Map<String, String> headerMap) throws Exception {
-		return doRequest(HttpMethod.GET, url, paramMap, headerMap);
-	}
+    /**
+     * 发送HTTPS_POST请求
+     */
+    public static String sendPostSSLRequest(String reqURL, Map<String, String> params){
+        return sendPostSSLRequest(reqURL, params, null, null);
+    }
 
-	/**
-	 * GET请求
-	 * 
-	 * @param url
-	 *            请求路径
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String post(String url) throws Exception {
-		return doRequest(HttpMethod.POST, url, null, null);
-	}
 
-	/**
-	 * GET请求
-	 * 
-	 * @param url
-	 *            请求路径
-	 * @param paramMap
-	 *            请求参数
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String post(String url, Map<String, String> paramMap) throws Exception {
-		return doRequest(HttpMethod.POST, url, paramMap, null);
-	}
+    /**
+     * 发送HTTPS_POST请求
+     * @param reqURL        请求地址
+     * @param params        请求参数
+     * @param encodeCharset 编码字符集,编码请求数据时用之,其为null时默认采用UTF-8解码
+     * @param decodeCharset 解码字符集,解析响应数据时用之,其为null时默认采用UTF-8解码
+     * @return 远程主机响应正文
+     */
+    public static String sendPostSSLRequest(String reqURL, Map<String, String> params, String encodeCharset, String decodeCharset){
+        String responseContent = "";
+        HttpClient httpClient = new DefaultHttpClient();
+        X509TrustManager xtm = new X509TrustManager(){
+            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+            public X509Certificate[] getAcceptedIssuers() {return null;}
+        };
+        try {
+            SSLContext ctx = SSLContext.getInstance("TLS");
+            ctx.init(null, new TrustManager[]{xtm}, null);
+            SSLSocketFactory socketFactory = new SSLSocketFactory(ctx);
+            httpClient.getConnectionManager().getSchemeRegistry().register(new Scheme("https", 443, socketFactory));
 
-	/**
-	 * GET请求
-	 * 
-	 * @param url
-	 *            请求路径
-	 * @param paramMap
-	 *            请求参数
-	 * @param headerMap
-	 *            自定义头信息
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String post(String url, Map<String, String> paramMap, Map<String, String> headerMap) throws Exception {
-		return doRequest(HttpMethod.POST, url, paramMap, headerMap);
-	}
+            HttpPost httpPost = new HttpPost(reqURL);
+            List<NameValuePair> formParams = new ArrayList<NameValuePair>();
+            for(Map.Entry<String,String> entry : params.entrySet()){
+                formParams.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+            }
+            httpPost.setEntity(new UrlEncodedFormEntity(formParams, encodeCharset==null ? "UTF-8" : encodeCharset));
 
-	/**
-	 * 发起JSON Post请求
-	 * 
-	 * @param url
-	 *            请求地址
-	 * @param jsonData
-	 *            JSON数据
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String postJson(String url, Map<String, Object> jsonData) throws Exception {
-		Map<String, String> jsonMap = new HashMap<String, String>();
-		jsonMap.put(JSON_DATA_KEY, JSON.toJSONString(jsonData));
-		return doRequest(HttpMethod.POST_JSON, url, jsonMap, null);
-	}
-	
-	
-	/**
-	 * 发起JSON Post请求
-	 * 
-	 * @param url
-	 *            请求地址
-	 * @param jsonData
-	 *            JSON数据
-	 * @param headerMap
-	 *            头信息
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String postJson(String url, Map<String, Object> jsonData, Map<String, String> headerMap) throws Exception {
-		Map<String, String> jsonMap = new HashMap<String, String>();
-		jsonMap.put(JSON_DATA_KEY, JSON.toJSONString(jsonData));
-		return doRequest(HttpMethod.POST_JSON, url, jsonMap, headerMap);
-	}
+            HttpResponse response = httpClient.execute(httpPost);
+            HttpEntity entity = response.getEntity();
+            if (null != entity) {
+                responseContent = EntityUtils.toString(entity, decodeCharset==null ? "UTF-8" : decodeCharset);
+                EntityUtils.consume(entity);
+            }
+        } catch (Exception e) {
+            logger.debug("与[" + reqURL + "]通信过程中发生异常,堆栈信息为", e);
+        } finally {
+            httpClient.getConnectionManager().shutdown();
+        }
+        return responseContent;
+    }
 
-	/**
-	 * 发起XML Post请求
-	 * 
-	 * @param url
-	 *            请求地址
-	 * @param xmlData
-	 *            XML数据
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String postXml(String url, String xmlData) throws Exception {
-		Map<String, String> jsonMap = new HashMap<String, String>();
-		jsonMap.put(XML_DATA_KEY, xmlData);
-		return doRequest(HttpMethod.POST_XML, url, jsonMap, null);
-	}
 
-	/**
-	 * 发起XML Post请求
-	 * 
-	 * @param url
-	 *            请求地址
-	 * @param xmlData
-	 *            XML数据
-	 * @param headerMap
-	 *            头信息
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String postXml(String url, String xmlData, Map<String, String> headerMap) throws Exception {
-		Map<String, String> jsonMap = new HashMap<String, String>();
-		jsonMap.put(XML_DATA_KEY, xmlData);
-		return doRequest(HttpMethod.POST_XML, url, jsonMap, headerMap);
-	}
+    /**
+     * 发送HTTP_POST请求
+     * @param reqURL 请求地址
+     * @param params 发送到远程主机的正文数据,其数据类型为<code>java.util.Map<String, String></code>
+     * @return 远程主机响应正文`HTTP状态码,如<code>"SUCCESS`200"</code><br>若通信过程中发生异常则返回"Failed`HTTP状态码",如<code>"Failed`500"</code>
+     */
+    public static String sendPostRequestByJava(String reqURL, Map<String, String> params){
+        StringBuilder sendData = new StringBuilder();
+        for(Map.Entry<String, String> entry : params.entrySet()){
+            sendData.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+        }
+        if(sendData.length() > 0){
+            sendData.setLength(sendData.length() - 1); //删除最后一个&符号
+        }
+        return sendPostRequestByJava(reqURL, sendData.toString());
+    }
 
-	// =======================SSL========================
 
-	/**
-	 * 发起JSON Post请求
-	 * 
-	 * @param url
-	 *            请求地址
-	 * @param jsonData
-	 *            JSON数据
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String postJsonSSL(String url, Map<String, Object> jsonData, SSLEnvBuilder sslEnvBuilder) throws Exception {
-		Map<String, String> jsonMap = new HashMap<String, String>();
-		jsonMap.put(JSON_DATA_KEY, JSON.toJSONString(jsonData));
-		return doRequestSSL(HttpMethod.POST_JSON, url, jsonMap, null, sslEnvBuilder);
-	}
+    /**
+     * 发送HTTP_POST请求
+     * @param reqURL   请求地址
+     * @param sendData 发送到远程主机的正文数据
+     * @return 远程主机响应正文`HTTP状态码,如<code>"SUCCESS`200"</code><br>若通信过程中发生异常则返回"Failed`HTTP状态码",如<code>"Failed`500"</code>
+     */
+    public static String sendPostRequestByJava(String reqURL, String sendData){
+        HttpURLConnection httpURLConnection = null;
+        OutputStream out = null; //写
+        InputStream in = null;   //读
+        int httpStatusCode = 0;  //远程主机响应的HTTP状态码
+        try{
+            URL sendUrl = new URL(reqURL);
+            httpURLConnection = (HttpURLConnection)sendUrl.openConnection();
+            httpURLConnection.setRequestMethod("POST");
+            httpURLConnection.setDoOutput(true);        //指示应用程序要将数据写入URL连接,其值默认为false
+            httpURLConnection.setUseCaches(false);
+            httpURLConnection.setConnectTimeout(30000); //30秒连接超时
+            httpURLConnection.setReadTimeout(30000);    //30秒读取超时
 
-	/**
-	 * 发起JSON Post请求
-	 * 
-	 * @param url
-	 *            请求地址
-	 * @param jsonData
-	 *            JSON数据
-	 * @param headerMap
-	 *            头信息
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String postJsonSSL(String url, Map<String, Object> jsonData, Map<String, String> headerMap, SSLEnvBuilder sslEnvBuilder) throws Exception {
-		Map<String, String> jsonMap = new HashMap<String, String>();
-		jsonMap.put(JSON_DATA_KEY, JSON.toJSONString(jsonData));
-		return doRequestSSL(HttpMethod.POST_JSON, url, jsonMap, headerMap, sslEnvBuilder);
-	}
+            out = httpURLConnection.getOutputStream();
+            out.write(sendData.toString().getBytes());
 
-	/**
-	 * 发起XML Post请求
-	 * 
-	 * @param url
-	 *            请求地址
-	 * @param xmlData
-	 *            XML数据
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String postXmlSSL(String url, String xmlData, SSLEnvBuilder sslEnvBuilder) throws Exception {
-		Map<String, String> jsonMap = new HashMap<String, String>();
-		jsonMap.put(XML_DATA_KEY, xmlData);
-		return doRequestSSL(HttpMethod.POST_XML, url, jsonMap, null, sslEnvBuilder);
-	}
+            //清空缓冲区,发送数据
+            out.flush();
 
-	/**
-	 * 发起XML Post请求
-	 * 
-	 * @param url
-	 *            请求地址
-	 * @param xmlData
-	 *            XML数据
-	 * @param headerMap
-	 *            头信息
-	 * @return 请求返回数据
-	 * 
-	 * @throws Exception
-	 */
-	public static String postXmlSSL(String url, String xmlData, Map<String, String> headerMap, SSLEnvBuilder sslEnvBuilder) throws Exception {
-		Map<String, String> jsonMap = new HashMap<String, String>();
-		jsonMap.put(XML_DATA_KEY, xmlData);
-		return doRequestSSL(HttpMethod.POST_XML, url, jsonMap, headerMap, sslEnvBuilder);
-	}
+            //获取HTTP状态码
+            httpStatusCode = httpURLConnection.getResponseCode();
 
-	public interface SSLEnvBuilder {
-		LayeredConnectionSocketFactory createSSLSocketFactory();
-	}
+            in = httpURLConnection.getInputStream();
+            byte[] byteDatas = new byte[in.available()];
+            in.read(byteDatas);
+            return new String(byteDatas) + "`" + httpStatusCode;
+        }catch(Exception e){
+            logger.debug(e.getMessage());
+            return "Failed`" + httpStatusCode;
+        }finally{
+            if(out != null){
+                try{
+                    out.close();
+                }catch (Exception e){
+                    logger.debug("关闭输出流时发生异常,堆栈信息如下", e);
+                }
+            }
+            if(in != null){
+                try{
+                    in.close();
+                }catch(Exception e){
+                    logger.debug("关闭输入流时发生异常,堆栈信息如下", e);
+                }
+            }
+            if(httpURLConnection != null){
+                httpURLConnection.disconnect();
+                httpURLConnection = null;
+            }
+        }
+    }
 
-	private static String doRequest(HttpMethod method, String url, Map<String, String> paramMap, Map<String, String> headerMap) throws Exception {
-		return doRequestSSL(method, url, paramMap, headerMap, null);
-	}
+    /**
+     * https posp请求，可以绕过证书校验
+     * @param url
+     * @param params
+     * @return
+     */
+    public static final String sendHttpsRequestByPost(String url, Map<String, String> params) {
+        String responseContent = null;
+        HttpClient httpClient = new DefaultHttpClient();
+        //创建TrustManager
+        X509TrustManager xtm = new X509TrustManager() {
+            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+        };
+        //这个好像是HOST验证
+        X509HostnameVerifier hostnameVerifier = new X509HostnameVerifier() {
+            public boolean verify(String arg0, SSLSession arg1) {
+                return true;
+            }
+            public void verify(String arg0, SSLSocket arg1) throws IOException {}
+            public void verify(String arg0, String[] arg1, String[] arg2) throws SSLException {}
+            public void verify(String arg0, X509Certificate arg1) throws SSLException {}
+        };
+        try {
+            //TLS1.0与SSL3.0基本上没有太大的差别，可粗略理解为TLS是SSL的继承者，但它们使用的是相同的SSLContext
+            SSLContext ctx = SSLContext.getInstance("TLS");
+            //使用TrustManager来初始化该上下文，TrustManager只是被SSL的Socket所使用
+            ctx.init(null, new TrustManager[] { xtm }, null);
+            //创建SSLSocketFactory
+            SSLSocketFactory socketFactory = new SSLSocketFactory(ctx);
+            socketFactory.setHostnameVerifier(hostnameVerifier);
+            //通过SchemeRegistry将SSLSocketFactory注册到我们的HttpClient上
+            httpClient.getConnectionManager().getSchemeRegistry().register(new Scheme("https", socketFactory, 443));
+            HttpPost httpPost = new HttpPost(url);
+            List<NameValuePair> formParams = new ArrayList<NameValuePair>(); // 构建POST请求的表单参数
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                formParams.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+            }
+            httpPost.setEntity(new UrlEncodedFormEntity(formParams, "UTF-8"));
+            HttpResponse response = httpClient.execute(httpPost);
+            HttpEntity entity = response.getEntity(); // 获取响应实体
+            if (entity != null) {
+                responseContent = EntityUtils.toString(entity, "UTF-8");
+            }
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            // 关闭连接,释放资源
+            httpClient.getConnectionManager().shutdown();
+        }
+        return responseContent;
+    }
 
-	private static String doRequestSSL(HttpMethod method, String url, Map<String, String> paramMap, Map<String, String> headerMap, SSLEnvBuilder sslEnvBuilder) throws Exception {
 
-		if (url == null || "".equals(url))
-			throw new IllegalArgumentException("url cannot be empty");
-
-		HttpUriRequest request = null;
-		CloseableHttpResponse response = null;
-
-		try {
-			switch (method) {
-			case GET:
-				URI uri = new URIBuilder(url).addParameters(convertToNameValuePairs(paramMap)).build();
-				request = new HttpGet(uri);
-				break;
-			case POST:
-				HttpEntity formEntity = new UrlEncodedFormEntity(convertToNameValuePairs(paramMap), DEFAULT_CHARSET);
-				request = new HttpPost(url);
-				((HttpPost) request).setEntity(formEntity);
-				break;
-			case POST_JSON:
-				String jsonData = paramMap.get(JSON_DATA_KEY);
-				LOG.debug("jsonData:{}", jsonData);
-				HttpEntity jsonEntity = new StringEntity(jsonData, ContentType.APPLICATION_JSON);
-				request = new HttpPost(url);
-				((HttpPost) request).setEntity(jsonEntity);
-				break;
-			case POST_XML:
-				String xmlData = paramMap.get(XML_DATA_KEY);
-				HttpEntity xmlEntity = new StringEntity(xmlData, DEFAULT_CHARSET);
-				request = new HttpPost(url);
-				((HttpPost) request).setEntity(xmlEntity);
-				break;
-
-			default:
-				break;
-			}
-
-			LOG.info("request:{}", request.toString());
-
-			response = httpClient.execute(request, HttpClientContext.create());
-			HttpEntity entity = response.getEntity();
-			int statusCode = response.getStatusLine().getStatusCode();
-			String resultData = EntityUtils.toString(entity, DEFAULT_CHARSET);
-
-			LOG.info("statusCode：{}", statusCode);
-			LOG.info("resultData：{}", resultData);
-
-			return resultData;
-		} catch (Exception e) {
-			LOG.error("execute [{}] request error", method.name());
-			throw e;
-		} finally {
-			if (null != request && !request.isAborted()) {
-				request.abort();
-			}
-			HttpClientUtils.closeQuietly(response);
-		}
-	}
-
-	private static List<NameValuePair> convertToNameValuePairs(Map<String, String> paramMap) {
-		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-		if (paramMap != null && paramMap.size() > 0) {
-			for (Map.Entry<String, String> e : paramMap.entrySet()) {
-				String value = e.getValue();
-				if (value != null && !"".equals(value)) {
-					nvps.add(new BasicNameValuePair(e.getKey(), value));
-				}
-			}
-		}
-		return nvps;
-	}
-
-	/**
-	 * 标识HTTP请求类型枚举
-	 */
-	static enum HttpMethod {
-		GET, POST, PUT, DELETE, POST_JSON, POST_XML
-	}
-
-	public static void main(String[] args) {
-		long start = System.currentTimeMillis();
-		try {
-			System.out.println(get("http://210.74.1.225"));
-		} catch (Exception e) {
-			LOG.error("Unknown error", e);
-		}
-		LOG.info("costs " + (System.currentTimeMillis() - start) + " ms");
-	}
+    /**
+     * 发送HTTP_POST请求,json格式数据
+     * @param url
+     * @param body
+     * @return
+     * @throws Exception
+     */
+    public static String sendPostByJson(String url, String body) throws Exception {
+        CloseableHttpClient httpclient = HttpClients.custom().build();
+        HttpPost post = null;
+        String resData = null;
+        CloseableHttpResponse result = null;
+        try {
+            post = new HttpPost(url);
+            HttpEntity entity2 = new StringEntity(body, Consts.UTF_8);
+            post.setConfig(RequestConfig.custom().setConnectTimeout(30000).setSocketTimeout(30000).build());
+            post.setHeader("Content-Type", "application/json");
+            post.setEntity(entity2);
+            result = httpclient.execute(post);
+            if (HttpStatus.SC_OK == result.getStatusLine().getStatusCode()) {
+                resData = EntityUtils.toString(result.getEntity());
+            }
+        } finally {
+            if (result != null) {
+                result.close();
+            }
+            if (post != null) {
+                post.releaseConnection();
+            }
+            httpclient.close();
+        }
+        return resData;
+    }
 
 }

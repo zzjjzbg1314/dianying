@@ -1,5 +1,4 @@
 <%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
-<%@ include file="header.jsp"%> 
 <!DOCTYPE html>
 <html lang="en">
 	<head>

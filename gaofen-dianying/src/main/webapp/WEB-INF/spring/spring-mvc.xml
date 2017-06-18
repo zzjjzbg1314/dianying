@@ -8,10 +8,8 @@
         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
         http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
 
-
-	<context:annotation-config />
-	
-	<context:component-scan base-package="com.gaofen.dianying"
+	<mvc:annotation-driven />
+	<context:component-scan base-package="com.gaofen.dianying.web.controller"
 		use-default-filters="false">
 		<context:include-filter type="annotation"
 			expression="org.springframework.stereotype.Controller" />
