@@ -6,10 +6,7 @@ import com.gaofen.dianying.consistents.MovieConfig;
 import com.gaofen.dianying.consistents.WxConsistent;
 import com.gaofen.dianying.enums.FlagEnum;
 import com.gaofen.dianying.persistents.entity.*;
-import com.gaofen.dianying.persistents.mapper.TDbMovieMapper;
-import com.gaofen.dianying.persistents.mapper.TMovieCommentsMapper;
-import com.gaofen.dianying.persistents.mapper.TMoviePhotosMapper;
-import com.gaofen.dianying.persistents.mapper.TMovieStarsMapper;
+import com.gaofen.dianying.persistents.mapper.*;
 import com.gaofen.dianying.service.MovieServcie;
 import com.gaofen.dianying.utils.HttpClientUtil;
 import net.sf.json.JSONObject;
@@ -20,11 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -49,6 +42,9 @@ public class MovieServiceImpl implements MovieServcie {
 
     @Autowired
     private TDbMovieMapper tDbMovieMapper;
+
+    @Autowired
+    private TMovieConfigMapper tMovieConfigMapper;
 
     @Autowired
     UserLoginSesionImpl userLoginSesionimpl;
@@ -82,17 +78,46 @@ public class MovieServiceImpl implements MovieServcie {
                 throw new RuntimeException("type is null!");
             }
 
-            TDbMovieExample example = new TDbMovieExample();
-            example.setOrderByClause("db_score desc");
-            TDbMovieExample.Criteria c = example.createCriteria();
-            c.andFlagEqualTo(FlagEnum.NORMAL.getCode());
-            c.andTypeEqualTo(type);
-            List<TDbMovieWithBLOBs> list = tDbMovieMapper.selectByExampleWithBLOBs(example);
-            if (CollectionUtils.isNotEmpty(list)) {
-                return list;
-            } else {
-                return null;
+            if(type.equals("102") || type.equals("103")){
+                TMovieConfigExample example = new TMovieConfigExample();
+                TMovieConfigExample.Criteria c = example.createCriteria();
+                c.andFlagEqualTo(FlagEnum.NORMAL.getCode());
+                c.andMovie_enum_idEqualTo(Integer.parseInt(type));
+                List<TMovieConfig> configList = tMovieConfigMapper.selectByExample(example);
+                if(CollectionUtils.isNotEmpty(configList)){
+                    TMovieConfig tmovieConfig=configList.get(0);
+                    String movieIdsStr = tmovieConfig.getMovie_ids();
+                    String[] arr=movieIdsStr.split(",");
+                    List<String> movieIdstrs=java.util.Arrays.asList(arr);
+                    List<Integer> movieIds = new ArrayList<>();
+                    for(String movie :movieIdstrs){
+                        movieIds.add(Integer.parseInt(movie));
+                    }
+
+                    LOG.info("movieIds----->"+movieIds.toString());
+                    List<TDbMovieWithBLOBs> list=this.queryByMovieIds(movieIds);
+
+                    return  list;
+                }else{
+                    return  null;
+                }
+            }else if(type.equals("104")){//豆瓣top50
+                List<TDbMovieWithBLOBs> list=this.queryAllMovies();
+                return list.subList(0,50);
+            }else{
+                TDbMovieExample example = new TDbMovieExample();
+                example.setOrderByClause("db_score desc");
+                TDbMovieExample.Criteria c = example.createCriteria();
+                c.andFlagEqualTo(FlagEnum.NORMAL.getCode());
+                c.andTypeEqualTo(type);
+                List<TDbMovieWithBLOBs> list = tDbMovieMapper.selectByExampleWithBLOBs(example);
+                if (CollectionUtils.isNotEmpty(list)) {
+                    return list;
+                } else {
+                    return null;
+                }
             }
+
         } catch (Exception e) {
             LOG.error("MovieServcie queryMoviesByType failed!>>>>>" + e.getMessage());
             return null;
@@ -400,14 +425,17 @@ public class MovieServiceImpl implements MovieServcie {
     public List<TDbMovieWithBLOBs> queryByMovieIds(List<Integer> movieIDS) {
         try{
             if(CollectionUtils.isNotEmpty(movieIDS)){
-                ArrayList<TDbMovieWithBLOBs> movies = new ArrayList<>();
-                for(Integer movieID :movieIDS){
-                   TDbMovieWithBLOBs movie= this.queryMovieByMovieId(movieID);
-                    if(movie !=null){
-                        movies.add(movie);
-                    }
-                }
-                return  movies;
+                TDbMovieExample example = new TDbMovieExample();
+                TDbMovieExample.Criteria c = example.createCriteria();
+                c.andFlagEqualTo(FlagEnum.NORMAL.getCode());
+                c.andIdIn(movieIDS);
+                example.setOrderByClause("db_score desc");
+
+                List<TDbMovieWithBLOBs> movies =
+                        tDbMovieMapper.selectByExampleWithBLOBs(example);
+                if(CollectionUtils.isNotEmpty(movies))
+                    return  movies;
+                return  null;
             }
             return  null;
         }catch (Exception e){
@@ -417,22 +445,5 @@ public class MovieServiceImpl implements MovieServcie {
         }
     }
 
-    @Override
-    @RequestMapping("/WEB-INF")
 
-    public   JSONObject queryByJsonConfig() {
-        try{
-
-            InputStream  content = (resourceLoader.getResource("/WEB-INF/config/movie.json").getInputStream());
-
-            //path.load(new FileInputStream(path + "parameter.properties"));
-            BufferedReader br = new BufferedReader(new FileReader(
-                    "/WEB-INF/config/movie.json"));
-            LOG.info(br.toString());
-            return  null;
-        }catch (Exception e){
-            String errMsg="queryByJsonConfig failed!"+e.getMessage();
-            LOG.error(errMsg);
-            throw new RuntimeException(errMsg);
-        }    }
 }

@@ -83,7 +83,11 @@ public class MovieController {
                 }
             }
             serviceResult.setCode(200);
-            serviceResult.setData(list);
+            if(StringUtils.isNotEmpty(param.getWelcomeFlag()) && param.getWelcomeFlag().equals("YES") && list.size()>8){
+                serviceResult.setData(list.subList(0,8));
+            }else {
+                serviceResult.setData(list);
+            }
             serviceResult.setMsg("success");
         }catch (Exception e ){
             LOG.error("queryMoviesByType failed!"+e.getMessage());

@@ -83,11 +83,6 @@ public interface MovieServcie {
      */
     List<TDbMovieWithBLOBs> queryByMovieIds(List<Integer> movieIDS);
 
-    /**
-     * 通过读取json配置信息返回结果
-     * @return
-     */
 
-    JSONObject queryByJsonConfig();
 
 }

@@ -24,9 +24,8 @@ public class TMovieTest {
         //1爱情 2励志 3家庭 4科幻  5奇幻  6动画  7犯罪  8悬疑  9战争  10记录 11华语   12印度      13冒险 14动作
 
         //MovieDetailInfo movieDetailInfo =movieServcie.queryMovieDetailInfoByMovieId(1);
-        //movieServcie.insertDbMovieByDbApi(6311303,"说一句，年轻的船长真他妈的帅!", 5);
-        movieServcie.queryByJsonConfig();
-
+        //movieServcie.insertDbMovieByDbApi(25824686,"脑残粉来了", 4);
+        //movieServcie.queryMoviesByType("102");
 
     }
 

@@ -17,7 +17,23 @@ public class MovieQureyParam {
 
     private List<Integer> movieIds;
 
+    private String welcomeFlag;
 
+    public Integer getMovieId() {
+        return movieId;
+    }
+
+    public void setMovieId(Integer movieId) {
+        this.movieId = movieId;
+    }
+
+    public String getTypeStr() {
+        return typeStr;
+    }
+
+    public void setTypeStr(String typeStr) {
+        this.typeStr = typeStr;
+    }
 
     public String getForm_id() {
         return form_id;
@@ -35,27 +51,19 @@ public class MovieQureyParam {
         this.uuid = uuid;
     }
 
-    public String getTypeStr() {
-        return typeStr;
-    }
-
-    public void setTypeStr(String typeStr) {
-        this.typeStr = typeStr;
-    }
-
-    public Integer getMovieId() {
-        return movieId;
-    }
-
-    public void setMovieId(Integer movieId) {
-        this.movieId = movieId;
-    }
-
     public List<Integer> getMovieIds() {
         return movieIds;
     }
 
     public void setMovieIds(List<Integer> movieIds) {
         this.movieIds = movieIds;
+    }
+
+    public String getWelcomeFlag() {
+        return welcomeFlag;
+    }
+
+    public void setWelcomeFlag(String welcomeFlag) {
+        this.welcomeFlag = welcomeFlag;
     }
 }
