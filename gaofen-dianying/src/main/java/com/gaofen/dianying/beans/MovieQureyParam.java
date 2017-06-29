@@ -11,6 +11,8 @@ public class MovieQureyParam {
 
     private String typeStr;
 
+    private  List<String> typeListStrs;
+
     private String form_id;
 
     private String uuid;
@@ -18,6 +20,7 @@ public class MovieQureyParam {
     private List<Integer> movieIds;
 
     private String welcomeFlag;
+
 
     public Integer getMovieId() {
         return movieId;
@@ -65,5 +68,13 @@ public class MovieQureyParam {
 
     public void setWelcomeFlag(String welcomeFlag) {
         this.welcomeFlag = welcomeFlag;
+    }
+
+    public List<String> getTypeListStrs() {
+        return typeListStrs;
+    }
+
+    public void setTypeListStrs(List<String> typeListStrs) {
+        this.typeListStrs = typeListStrs;
     }
 }

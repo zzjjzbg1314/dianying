@@ -1,0 +1,133 @@
+.headnav-sub {
+    background-color: white !important;
+}
+
+.headnav-sub .cont {
+    line-height: 1 !important;
+}
+
+.headnav-sub .cont a {
+    color: #3565ad !important;
+}
+
+.headnav-sub .cont a:hover {
+    color: #fff !important;
+}
+
+.ui-menu .ui-state-focus,
+.ui-menu .ui-state-active {
+    font-weight: bold !important;
+    margin: 0 !important;
+}
+
+.ui-autocomplete {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 2048 !important;
+    float: left;
+    display: none;
+    min-width: 160px;
+    _width: 160px;
+    padding: 4px 0;
+    margin: 2px 0 0 0;
+    list-style: none;
+    background-color: #ffffff;
+    border-color: #ccc;
+    border-color: rgba(0, 0, 0, 0.2);
+    border-style: solid;
+    border-width: 1px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    -webkit-background-clip: padding-box;
+    -moz-background-clip: padding;
+    background-clip: padding-box;
+    *border-right-width: 2px;
+    *border-bottom-width: 2px;
+
+    .ui-menu-item > a.ui-corner-all {
+        display: block;
+        padding: 3px 15px;
+        clear: both;
+        font-weight: normal;
+        line-height: 18px;
+        color: #555555;
+        white-space: nowrap;
+
+        &.ui-state-hover, &.ui-state-active {
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 0;
+            -webkit-border-radius: 0;
+            -moz-border-radius: 0;
+            background: #0088cc none;
+        }
+
+    }
+
+}
+
+.selected-panel{
+    background-color: #d9edf7;
+    border-color:#bce8f1;
+
+    font-weight: bolder;
+}
+.tab-switch{
+    margin-top: 10px;
+}
+.tab-switch a{
+    border-radius: 4px;
+}
+
+.star {
+    display: inline-block;
+    width: 80px;
+    height: 16px;
+    background-image: url(../image/star.png);
+    background-repeat: no-repeat;
+    vertical-align: middle;
+}
+@media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
+    .star {
+        background-image: url('../image/star@2x.png');
+        background-size: 100% 1412.5%;
+    }
+}
+.s50 {
+    background-position: 0 0;
+}
+.s45 {
+    background-position: 0 -21px;
+}
+.s40 {
+    background-position: 0 -42px;
+}
+.s35 {
+    background-position: 0 -63px;
+}
+.s30 {
+    background-position: 0 -84px;
+}
+.s25 {
+    background-position: 0 -105px;
+}
+.s20 {
+    background-position: 0 -126px;
+}
+.s15 {
+    background-position: 0 -147px;
+}
+.s10 {
+    background-position: 0 -168px;
+}
+.s5 {
+    background-position: 0 -189px;
+}
+.s0 {
+    background-position: 0 -210px;
+}

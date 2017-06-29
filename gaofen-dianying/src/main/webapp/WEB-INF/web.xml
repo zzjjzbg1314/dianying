@@ -37,6 +37,7 @@
 	</filter-mapping>
 
 
+
 	<servlet>
 		<servlet-name>springmvc</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
@@ -52,7 +53,7 @@
 	</servlet-mapping>
 
 	<welcome-file-list>
-		<welcome-file>/WEB-INF/views/index.jsp</welcome-file>
+		<welcome-file>/WEB-INF/pages/movie/index.jsp</welcome-file>
 	</welcome-file-list>
 	
 </web-app>

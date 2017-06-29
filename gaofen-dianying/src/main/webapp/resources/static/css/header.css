@@ -1,0 +1,83 @@
+.Fix:after {
+  display: block;
+  content: '\20';
+  height: 0;
+  clear: both;
+}
+.f-l {
+  float: left;
+}
+.f-r {
+  float: right;
+}
+
+.headbar{
+  background-color:#333333;
+  color:#fff;
+  height:28px;
+  line-height: 28px;
+}
+
+.headbar .cont{
+  width:960px;
+  margin:0 auto;
+  font-size:12px;
+  position: relative;
+}
+
+.headbar .cont .download{
+  position:absolute;
+  top:0;
+  right:0;
+}
+
+.headbar .cont a{
+    color:#fff;
+    margin-left:15px;
+}
+
+.headbar .cont a.first{
+    margin-left:0;
+}
+
+.headbar .cont a:hover{
+    text-decoration: none;
+}
+
+.headnav{
+  background-color:#3565ad;
+  color:#fff;
+}
+
+.headnav .cont{
+  width:960px;
+  margin:0 auto;
+  line-height: 2;
+}
+
+.headnav .cont .nav-list a{
+    color: #FFF;
+    font-size: 16px;
+    padding: 13px 0;
+    float: left;
+    text-align: center;
+    width:96px;
+}
+
+.headnav .cont .nav-list a:hover{
+    background-color:#174282;
+    text-decoration: none;
+}
+
+.headnav .cont .nav-list a.on{
+    color: #3565AD;
+    background-color: #FFF!important;
+    text-decoration: none;
+}
+
+.headnav .cont .logo{
+  float:left;
+  margin-top:10px;
+  margin-right:30px;
+}
+

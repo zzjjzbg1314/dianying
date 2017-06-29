@@ -1,0 +1,136 @@
+.sidebar {
+    margin-left: 20px;
+    margin-top: 20px;
+    margin-right: 20px;
+    width: 200px;
+}
+
+
+#shop-search-loading{
+    width:75px;
+    height:15px;
+    margin:0 auto;
+}
+.search-loading{
+    background-color:#9FC0FF;
+    border:1px solid #3B5998;
+    float:left;
+    height:20px;
+    margin-left:5px;
+    width:15px;
+    opacity:0.1;
+    -webkit-transform:scale(0.7);
+    -webkit-animation-name: facebook;
+    -webkit-animation-duration: 1s;
+    -webkit-animation-iteration-count: infinite;
+    -webkit-animation-direction: linear;
+
+}
+#block_1{
+    -webkit-animation-delay: .2s;
+}
+#block_2{
+    -webkit-animation-delay: .3s;
+}
+#block_3{
+    -webkit-animation-delay: .4s;
+}
+@-webkit-keyframes facebook{
+    0%{-webkit-transform: scale(1.2);opacity:1;}
+    100%{-webkit-transform: scale(0.7);opacity:0.1;}
+}
+
+.sidebar-nav {
+    position: relative;
+    font-size: 14px;
+    margin: 0;
+    padding: 0;
+}
+.sidebar-nav ol {
+    margin: 0;
+    padding: 0;
+}
+.sidebar-nav .shop {
+    height: 42px;
+    line-height: 42px;
+    padding-left: 28px;
+    background-color:#f2f2f2;
+}
+.sidebar-nav .shop i {
+    position: absolute;
+    right: 10px;
+    font-size: 20px;
+    line-height: 38px;
+    color: #808080;
+}
+.sidebar-nav .shopSub {
+    text-indent: 40px;
+}
+
+.sidebar-nav .lv1 > a {
+    height: 42px;
+    line-height: 42px;
+    padding-left: 28px;
+}
+.sidebar-nav .lv1.expand > a {
+    color: #08c;
+    font-weight: bold;
+}
+.sidebar-nav .lv1.leaf a.selected-panel, .sidebar-nav .lv1.leaf a:hover.selected-panel{
+    background-color: #3565ad;
+    color: #fff;
+}
+
+.sidebar-nav .lv1.leaf a:hover {
+  background-color: #d9edf7;
+  border-color: #bce8f1;
+}
+
+.sidebar-nav .lv2 > a {
+    height: 32px;
+    line-height: 32px;
+    padding-left: 38px;
+    color: #666;
+}
+.sidebar-nav .lv2.active > a {
+    background-color: #08c;
+    color: #fff;
+}
+
+.sidebar-nav li {
+    list-style: none;
+    border-bottom: 1px solid #ebebeb;
+    border-top: 1px solid #fff;
+    position: relative;
+    display: block;
+    cursor: pointer;
+}
+.sidebar-nav li :hover > a {
+    background-color: #e6e6e6;
+}
+.sidebar-nav li:first-child {
+    border-top: 0;
+}
+.sidebar-nav li a {
+    display: block;
+    text-decoration: none;
+    overflow: hidden;
+    color: #000;
+    outline: none;
+}
+
+.alert-box {
+    z-index: 9999;
+    position: fixed;
+    max-width: 400px;
+    font-size: 150%;
+}
+
+
+ .panel-body .form-group ul{
+     width: 95%;
+ }
+
+.panel-body .form-group ul li{
+    text-indent: 0;
+}
