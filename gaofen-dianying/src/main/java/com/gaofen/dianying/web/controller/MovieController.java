@@ -178,6 +178,31 @@ public class MovieController {
         return serviceResult;
     }
 
+
+
+    @RequestMapping(value = "queryImageListByMovieId", method = RequestMethod.POST)
+    @ResponseBody
+    public NewServiceResult queryImageListByMovieId(HttpServletRequest request, @RequestBody MovieQureyParam param) {
+        NewServiceResult serviceResult = new NewServiceResult();
+        try{
+            if(param.getMovieId() == null){
+                LOG.error("movieId is null!");
+                throw new RuntimeException("movieId is null!");
+            }
+            List<String> imageUrlList=movieServcie.queryImageListByMovieId(param.getMovieId());
+            serviceResult.setCode(200);
+            serviceResult.setMsg("success");
+            serviceResult.setData(imageUrlList);
+        }catch (Exception e ){
+            LOG.error("queryImageListByMovieId failed!"+e.getMessage());
+            serviceResult.setCode(500);
+            serviceResult.setData(null);
+            serviceResult.setMsg("failed!");
+        }
+        return serviceResult;
+    }
+
+
     @RequestMapping(value = "sendBdyMsg", method = RequestMethod.POST)
     @ResponseBody
     public NewServiceResult sendBdyMsg(HttpServletRequest request, @RequestBody MovieQureyParam param) {

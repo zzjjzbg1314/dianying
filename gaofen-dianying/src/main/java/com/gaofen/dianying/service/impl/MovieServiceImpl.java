@@ -9,6 +9,7 @@ import com.gaofen.dianying.persistents.entity.*;
 import com.gaofen.dianying.persistents.mapper.*;
 import com.gaofen.dianying.service.MovieServcie;
 import com.gaofen.dianying.utils.HttpClientUtil;
+import com.gaofen.dianying.utils.MovieUtil;
 import net.sf.json.JSONObject;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+
 
 /**
  * Created by zongjie on 2017/5/2.
@@ -58,7 +60,6 @@ public class MovieServiceImpl implements MovieServcie {
             example.setOrderByClause("db_score desc");
             TDbMovieExample.Criteria c = example.createCriteria();
             c.andFlagEqualTo(FlagEnum.NORMAL.getCode());
-
             List<TDbMovieWithBLOBs> list = tDbMovieMapper.selectByExampleWithBLOBs(example);
             if (CollectionUtils.isNotEmpty(list)) {
                 return list;
@@ -77,6 +78,7 @@ public class MovieServiceImpl implements MovieServcie {
                 LOG.error("type is null!");
                 throw new RuntimeException("type is null!");
             }
+            List<TDbMovieWithBLOBs> list = new ArrayList<>();
 
             if(type.equals("102") || type.equals("103")){
                 TMovieConfigExample example = new TMovieConfigExample();
@@ -93,31 +95,31 @@ public class MovieServiceImpl implements MovieServcie {
                     for(String movie :movieIdstrs){
                         movieIds.add(Integer.parseInt(movie));
                     }
-
                     LOG.info("movieIds----->"+movieIds.toString());
-                    List<TDbMovieWithBLOBs> list=this.queryByMovieIds(movieIds);
-
-                    return  list;
-                }else{
-                    return  null;
+                    list=this.queryByMovieIds(movieIds);
                 }
             }else if(type.equals("104")){//豆瓣top50
-                List<TDbMovieWithBLOBs> list=this.queryAllMovies();
-                return list.subList(0,50);
+                list=this.queryAllMovies();
             }else{
                 TDbMovieExample example = new TDbMovieExample();
                 example.setOrderByClause("db_score desc");
                 TDbMovieExample.Criteria c = example.createCriteria();
                 c.andFlagEqualTo(FlagEnum.NORMAL.getCode());
                 c.andTypeEqualTo(type);
-                List<TDbMovieWithBLOBs> list = tDbMovieMapper.selectByExampleWithBLOBs(example);
-                if (CollectionUtils.isNotEmpty(list)) {
-                    return list;
-                } else {
-                    return null;
-                }
+                list = tDbMovieMapper.selectByExampleWithBLOBs(example);
             }
-
+            if (CollectionUtils.isNotEmpty(list)) {
+                /*for(TDbMovieWithBLOBs movie : list){
+                    movie.setImages(MovieUtil.transforMovieImageUrl(movie.getImages()));
+                }*/
+                if(type.equals("104")){
+                    return list.subList(0,50);
+                }else {
+                    return  list;
+                }
+            } else {
+                return null;
+            }
         } catch (Exception e) {
             LOG.error("MovieServcie queryMoviesByType failed!>>>>>" + e.getMessage());
             return null;
@@ -176,6 +178,36 @@ public class MovieServiceImpl implements MovieServcie {
             return movieDetailInfo;
         } catch (Exception e) {
             LOG.error("MovieServcie queryMovieDetailInfoByMovieId failed!>>>>" + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<String> queryImageListByMovieId(Integer movieId) {
+        try {
+            if (movieId == null) {
+                LOG.error("movieId is null!");
+                throw new RuntimeException("movieId is null!");
+            }
+            TDbMovieWithBLOBs tMovie = this.queryMovieByMovieId(movieId);
+            if (tMovie != null) {
+                List<TMoviePhotos> moviePhotoses = this.findMoviePhotosByMovieId(tMovie.getDb_id());
+                if (moviePhotoses != null) {
+                    ArrayList<String> imageUrlList = new ArrayList<>();
+                    for (TMoviePhotos moviePhotos : moviePhotoses) {
+                        //处理图片
+                        String originImage = moviePhotos.getPic_url();
+                        String transForImageUrl = MovieUtil.transforMovieImageUrl(originImage);
+                        imageUrlList.add(transForImageUrl);
+                    }
+                    return imageUrlList;
+                } else {
+                    return null;
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            LOG.error("MovieServcie queryImageListByMovieId failed!>>>>" + e.getMessage());
             return null;
         }
     }
@@ -281,7 +313,7 @@ public class MovieServiceImpl implements MovieServcie {
                 tDbMovie.setDb_score(obj.getJSONObject("rating").getString("average"));
                 tDbMovie.setDb_stars(obj.getJSONObject("rating").getInt("stars"));
                 tDbMovie.setYear(obj.getInt("year"));
-                tDbMovie.setImages(obj.getJSONObject("images").getString("medium"));
+                tDbMovie.setImages(MovieUtil.transforMovieImageUrl(obj.getJSONObject("images").getString("medium")));
                 tDbMovie.setTitle(obj.getString("title"));
                 tDbMovie.setCountries(processJsonStr(obj.getString("countries")));
                 tDbMovie.setGenres(processJsonStr(obj.getString("genres")));

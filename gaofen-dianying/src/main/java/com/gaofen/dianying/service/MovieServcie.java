@@ -1,8 +1,10 @@
 package com.gaofen.dianying.service;
 
 import com.gaofen.dianying.beans.MovieDetailInfo;
-import com.gaofen.dianying.persistents.entity.*;
-import net.sf.json.JSONObject;
+import com.gaofen.dianying.persistents.entity.TDbMovieWithBLOBs;
+import com.gaofen.dianying.persistents.entity.TMovieComments;
+import com.gaofen.dianying.persistents.entity.TMoviePhotos;
+import com.gaofen.dianying.persistents.entity.TMovieStars;
 
 import java.util.List;
 
@@ -82,6 +84,15 @@ public interface MovieServcie {
      * @return
      */
     List<TDbMovieWithBLOBs> queryByMovieIds(List<Integer> movieIDS);
+
+
+    /**
+     * 查询电影的剧照
+     * @param movieId
+     * @return
+     */
+    List<String> queryImageListByMovieId(Integer movieId);
+
 
 
 
